@@ -1,0 +1,31 @@
+.centeredlist{
+    text-align: center;
+    list-style-position: inside;
+}
+
+body{
+    background-color:floralwhite;
+    font-family:fantasy; 
+    border:4px dotted rgb(163, 48, 48);
+    margin: 15px;
+    padding: 20px;
+
+}
+
+h2{
+    font-weight: bolder;
+    color: rgb(136, 39, 39);
+}
+
+a{
+    color: rgb(136, 39, 39);
+}
+
+.linkbox{
+    border:2px solid rgb(136, 39, 39);
+    padding: 8px 12px;
+    border-radius: 6px;
+    display: inline-block;
+    text-decoration: none;
+    transition: 0.3s ease;
+}
