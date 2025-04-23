@@ -1,0 +1,238 @@
+<!---make a web app using chat gpt and the copy and paste the code for whatever thing you create-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Element Duo: Frostkin & Blazeheart</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: linear-gradient(to top, #000428, #004e92);
+      overflow: hidden;
+      font-family: 'Arial', sans-serif;
+    }
+    canvas {
+      display: block;
+      margin: auto;
+      background: #1e1e2f;
+      border: 3px solid #fff;
+      border-radius: 12px;
+    }
+    #instructions {
+      color: white;
+      text-align: center;
+      padding: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" style="color: white">Home</a>
+  <a href="scratch.html" style="color:white">Northern California</a>
+  <div id="instructions">
+    <h1>Element Duo: Frostkin & Blazeheart</h1>
+    <p>Use Arrow Keys to move Blazeheart 🔥 (Right Side)</p>
+    <p>Use WASD to move Frostkin ❄️ (Left Side)</p>
+  </div>
+  <canvas id="gameCanvas" width="1000" height="600"></canvas>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    class Player {
+      constructor(x, y, color, controls, gravityReverse) {
+        this.x = x;
+        this.y = y;
+        this.width = 40;
+        this.height = 60;
+        this.color = color;
+        this.controls = controls;
+        this.speed = 4;
+        this.vy = 0;
+        this.jumpStrength = 12;
+        this.gravity = gravityReverse ? -0.5 : 0.5;
+        this.onGround = false;
+      }
+
+      draw() {
+        ctx.fillStyle = this.color;
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+      }
+
+      update(platforms) {
+        this.vy += this.gravity;
+        this.y += this.vy;
+
+        this.onGround = false;
+        for (const platform of platforms) {
+          if (
+            this.x < platform.x + platform.width &&
+            this.x + this.width > platform.x &&
+            this.y + this.height > platform.y &&
+            this.y < platform.y + platform.height
+          ) {
+            if (this.gravity > 0) {
+              this.y = platform.y - this.height;
+            } else {
+              this.y = platform.y + platform.height;
+            }
+            this.vy = 0;
+            this.onGround = true;
+          }
+        }
+      }
+
+      move(keys) {
+        if (keys[this.controls.left]) this.x -= this.speed;
+        if (keys[this.controls.right]) this.x += this.speed;
+        if (keys[this.controls.jump] && this.onGround) {
+          this.vy = -this.jumpStrength * Math.sign(this.gravity);
+        }
+      }
+    }
+
+    const keys = {};
+    window.addEventListener("keydown", (e) => (keys[e.key] = true));
+    window.addEventListener("keyup", (e) => (keys[e.key] = false));
+
+    let level = 0;
+    const levels = [
+      {
+        platforms: [
+          { x: 0, y: 580, width: 1000, height: 20 },
+          { x: 0, y: 0, width: 1000, height: 20 },
+        ],
+        frostStart: { x: 100, y: 500 },
+        blazeStart: { x: 860, y: 40 },
+        frostPortal: { x: 500, y: 580 },
+        blazePortal: { x: 500, y: 20 },
+        message: "Level 1: Reunite at the center portal."
+      },
+      {
+        platforms: [
+          { x: 0, y: 580, width: 1000, height: 20 },
+          { x: 400, y: 480, width: 200, height: 20 },
+          { x: 0, y: 0, width: 1000, height: 20 },
+          { x: 400, y: 100, width: 200, height: 20 }
+        ],
+        frostStart: { x: 50, y: 500 },
+        blazeStart: { x: 900, y: 50 },
+        frostPortal: { x: 470, y: 460 },
+        blazePortal: { x: 530, y: 120 },
+        message: "Level 2: Meet on separate ledges."
+      },
+      {
+        platforms: [
+          { x: 0, y: 580, width: 1000, height: 20 },
+          { x: 300, y: 420, width: 400, height: 20 },
+          { x: 0, y: 0, width: 1000, height: 20 },
+          { x: 300, y: 160, width: 400, height: 20 },
+        ],
+        frostStart: { x: 100, y: 500 },
+        blazeStart: { x: 860, y: 40 },
+        frostPortal: { x: 480, y: 400 },
+        blazePortal: { x: 520, y: 180 },
+        message: "Level 3: Test of timing and precision."
+      }
+    ];
+
+    let frostkin, blazeheart;
+
+    function startLevel(index) {
+      const l = levels[index];
+      frostkin = new Player(l.frostStart.x, l.frostStart.y, "#00f0ff", {
+        left: "a",
+        right: "d",
+        jump: "w"
+      }, false);
+
+      blazeheart = new Player(l.blazeStart.x, l.blazeStart.y, "#ff4500", {
+        left: "ArrowLeft",
+        right: "ArrowRight",
+        jump: "ArrowUp"
+      }, true);
+    }
+
+    function drawPlatforms(platforms) {
+      ctx.fillStyle = "#ccc";
+      platforms.forEach(p => ctx.fillRect(p.x, p.y, p.width, p.height));
+    }
+
+    function drawPortal(x, y, color) {
+      ctx.beginPath();
+      ctx.arc(x, y, 20, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
+
+    function showMessage(text) {
+      ctx.fillStyle = "white";
+      ctx.font = "20px Arial";
+      ctx.fillText(text, 20, 40);
+    }
+
+    function checkWin(levelData) {
+      const inPortal = (player, portal) => (
+        player.x > portal.x - 20 && player.x < portal.x + 20 &&
+        player.y + player.height > portal.y - 20 && player.y < portal.y + 20
+      );
+
+      return inPortal(frostkin, levelData.frostPortal) && inPortal(blazeheart, levelData.blazePortal);
+    }
+
+    let levelCompleted = false;
+    let winTimeout = null;
+
+    function gameLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const currentLevel = levels[level];
+
+      drawPlatforms(currentLevel.platforms);
+      frostkin.move(keys);
+      blazeheart.move(keys);
+
+      frostkin.update(currentLevel.platforms);
+      blazeheart.update(currentLevel.platforms);
+
+      frostkin.draw();
+      blazeheart.draw();
+
+      drawPortal(currentLevel.frostPortal.x, currentLevel.frostPortal.y, "#00f0ff");
+      drawPortal(currentLevel.blazePortal.x, currentLevel.blazePortal.y, "#ff4500");
+
+      showMessage(currentLevel.message);
+
+      if (!levelCompleted && checkWin(currentLevel)) {
+        levelCompleted = true;
+        if (level < levels.length - 1) {
+          setTimeout(() => {
+            level++;
+            startLevel(level);
+            levelCompleted = false;
+          }, 1000);
+        } else {
+          setTimeout(() => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "white";
+            ctx.font = "40px Arial";
+            ctx.fillText("All Levels Complete!", 300, 300);
+          }, 1000);
+          return;
+        }
+      }
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    startLevel(0);
+    gameLoop();
+  </script>
+</body>
+</html>
+
+
